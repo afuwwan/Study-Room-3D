@@ -833,30 +833,51 @@ void Application::Render()
 
 }
 
+glm::vec3 cameraFront /*= glm::vec3(0.0f, 0.0f, -1.0f)*/;
+
+// Add yaw and pitch for camera rotation
+float yaw = -90.0f;
+float pitch = 0.0f;
+float sensitivity = 10.0f; // Adjust for mouse movement sensitivity
+
+
 void Application::ProcessInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-
-
 	// Handle camera movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		viewPos -= cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f); 
+		viewPos += cameraSpeed * cameraFront;
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		viewPos += cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		viewPos -= cameraSpeed * glm::vec3(1.0f, 0.0f, 0.0f);
+		viewPos -= cameraSpeed * cameraFront;
+	
+	/*if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		viewPos -= glm::normalize(glm::cross(cameraFront, glm::vec3(0.0f, 1.0f, 0.0f))) * cameraSpeed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		viewPos += cameraSpeed * glm::vec3(1.0f, 0.0f, 0.0f);
+		viewPos += glm::normalize(glm::cross(cameraFront, glm::vec3(0.0f, 1.0f, 0.0f))) * cameraSpeed;*/
+
+
+	// Rotate camera on A/D key press (yaw)
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		yaw -= sensitivity;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		yaw += sensitivity;
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		viewPos.y += cameraSpeed;
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		viewPos.y -= cameraSpeed;
 
-	// Update the view matrix with the new viewPos
-	glm::mat4 view = glm::lookAt(viewPos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	front.y = sin(glm::radians(pitch));
+	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(front);
+
+	// Update the view matrix with the new viewPos and cameraFront
+	glm::mat4 view = glm::lookAt(viewPos, viewPos + cameraFront, glm::vec3(0.0f, 1.0f, 0.0f));
 	shader->setMat4("view", view);
 
 
